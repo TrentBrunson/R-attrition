@@ -12,9 +12,26 @@ terminations
 
 # select columns
 colnames(terminations)
-headers <- c("Termination Month", "L6 Mgr Name")
+headers <- c("Employee ID", "Termination Month", "L6 Mgr Name")
 terminations_reduced <- terminations |> select(all_of(headers))
 terminations_reduced
+
+ggplot(terminations_reduced, aes(x = "L6 Mgr Name", y = "Employee ID")) +
+  geom_bar(
+    stat = "identity"
+  )
+
+library(palmerpenguins)
+ggplot(penguins)+
+  geom_bar(aes(x=species))
+
+
+
+
+
+
+
+
 
 ggplot(terminations_reduced, aes(x = "Termination Month", y = "L6 Mgr Name")) +
   geom_col()
