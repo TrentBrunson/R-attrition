@@ -12,6 +12,24 @@ terminations
 
 # select columns
 colnames(terminations)
-headers <- c{"Termination Month", "L6 Mgr Name"}
-terminations_reduced <- terminations |> select(headers)
+headers <- c("Termination Month", "L6 Mgr Name")
+terminations_reduced <- terminations |> select(all_of(headers1))
 terminations_reduced
+
+ggplot(terminations_reduced, aes(x = "Termination Month", y = "L6 Mgr Name")) +
+  geom_col()
+
+ggplot(terminations_reduced, aes(x = "Termination Month")) +
+  geom_bar()
+
+ggplot(terminations_reduced, aes(x = "Termination Month")) +
+  stat_count(geom = "line", aes(y = after_stat(count), group = 1))
+
+ggplot(terminations_reduced, aes(x = "Termination Month")) +
+  stat_count(aes(y = after_stat(count), group = 1)) +
+  geom_line()
+
+terminations_reduced |> 
+  count("Termination Month") |> 
+  ggplot(aes(x = "Termination Month")) +
+  geom_line()
