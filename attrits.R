@@ -13,19 +13,19 @@ terminations
 # select columns
 colnames(terminations)
 headers <- c("Employee ID", "Termination Month", "L6 Mgr Name")
-terminations_reduced <- terminations |> select(all_of(headers))
+terminations_reduced <- terminations |> select(all_of(headers), 
+  as.factor(terminations$"Termination Month", terminations$"L6 Mgr Name"))
+
+# terminations_reduced <- terminations |> select(all_of(headers), 
+  # as.factor(terminations$"Termination Month", terminations$"L6 Mgr Name"))
+  
 terminations_reduced
 
+# change data types to factor for chr
 ggplot(terminations_reduced, aes(x = "L6 Mgr Name", y = "Employee ID")) +
   geom_bar(
     stat = "identity"
   )
-
-library(palmerpenguins)
-ggplot(penguins)+
-  geom_bar(aes(x=species))
-
-
 
 
 
