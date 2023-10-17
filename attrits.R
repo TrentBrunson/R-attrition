@@ -33,3 +33,4 @@ terminations_reduced |>
   count("Termination Month") |> 
   ggplot(aes(x = "Termination Month")) +
   geom_line()
+
