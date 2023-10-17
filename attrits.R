@@ -13,7 +13,7 @@ terminations
 # select columns
 colnames(terminations)
 headers <- c("Termination Month", "L6 Mgr Name")
-terminations_reduced <- terminations |> select(all_of(headers1))
+terminations_reduced <- terminations |> select(all_of(headers))
 terminations_reduced
 
 ggplot(terminations_reduced, aes(x = "Termination Month", y = "L6 Mgr Name")) +
