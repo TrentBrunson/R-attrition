@@ -18,6 +18,25 @@ colnames(terminations)
 
 terminations$month
 
+
+# change all character columns to factors
+terminations <- as.data.frame(unclass(terminations), stringsAsFactors=TRUE)
+terminations
+
+
+# all GOPO terminations
+ggplot(terminations, aes(x = month, y = "Employee ID")) +
+  geom_col()
+
+# terminations by L6
+# drop rows of non-GOPO
+terminations |>
+  filter()
+ggplot(terminations, aes(x = L6.Mgr.Name, y = "Employee ID")) +
+  geom_col()
+
+ggplot(terminations, aes(x = "Employee ID")) +  geom_bar()
+
 # select columns
 colnames(terminations)
 headers <- c("Employee ID", "Termination Month", "L6 Mgr Name")
