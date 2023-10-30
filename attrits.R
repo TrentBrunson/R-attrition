@@ -5,10 +5,18 @@ library(tidyverse)
 library(cowplot)
 library(dplyr)
 library(scales)
+library(lubridate)
 
 # load data
 terminations <- read_csv("data\\terminations.csv")
+
+# convert date column from char to datae data type
+terminations$month <- month(mdy(terminations$`Termination Date - All`), label = TRUE, abbr = FALSE)
+str(terminations)
 terminations
+colnames(terminations)
+
+terminations$month
 
 # select columns
 colnames(terminations)
@@ -33,9 +41,6 @@ ggplot(terminations_reduced, aes(x = "L6 Mgr Name", y = "Employee ID")) +
 
 
 
-
-
-
 ggplot(terminations_reduced, aes(x = "Termination Month", y = "L6 Mgr Name")) +
   geom_col()
 
@@ -54,3 +59,4 @@ terminations_reduced |>
   ggplot(aes(x = "Termination Month")) +
   geom_line()
 
+ggplot(terminations_reduced, aes(x = "Termination Month")) + geom_bar()
