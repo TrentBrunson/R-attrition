@@ -26,7 +26,7 @@ L6s <- c("Smith, Brandee",
          "Williams, Danielle",
          "Alamuru, Chai")
   
-unique(terminations$L6.Mgr.Name)
+unique(terminations$"L6 Mgr Name")
 L6s
 str(L6s)
 
@@ -39,7 +39,7 @@ terminations
 terminations <- terminations |> filter(L6.Mgr.Name %in% L6s)
 terminations
 
-unique(terminations$L6.Mgr.Name)
+unique(terminations$"L6 Mgr Name")
 
 # all GOPO terminations
 ggplot(terminations, aes(x = month, fill = L6.Mgr.Name)) +
@@ -61,8 +61,6 @@ str(terminations_reduced)
 
 # change data types to factor for chr
 ggplot(terminations_reduced, aes(x = "L6 Mgr Name"))
-  geom_bar() 
-  
-  +
+  geom_bar() # +
   labs(x = "my label")
 
