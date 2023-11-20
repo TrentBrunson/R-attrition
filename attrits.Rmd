@@ -52,9 +52,10 @@ L6s <- c("Smith, Brandee",
 # L6s
 # str(L6s)
 summary(terminations)
+str(terminations)
 
 # change all character columns to factors
-terminations <- as.data.frame(unclass(terminations), stringsAsFactors=TRUE)
+# terminations <- as.data.frame(unclass(terminations), stringsAsFactors=TRUE)
 # terminations
 
 # terminations by L6
@@ -72,7 +73,7 @@ unique(terminations$L6.Mgr.Name)
 ```{r pressure, echo=FALSE}
 
 # all GOPO terminations
-ggplot(terminations, aes(x = month, fill = L6.Mgr.Name)) +
+ggplot(terminations, aes(x = month, fill = "L6 Mgr Name")) +
   geom_bar() 
   
 # select columns

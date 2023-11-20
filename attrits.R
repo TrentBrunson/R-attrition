@@ -47,7 +47,7 @@ ggplot(terminations, aes(x = month, fill = L6.Mgr.Name)) +
   
 # select columns
 colnames(terminations)
-headers <- c("Employee.ID", "Termination.Month", "L6.Mgr.Name")
+headers <- c("Employee ID", "Termination Month", "L6 Mgr Name")
 terminations_reduced <- terminations |> select(all_of(headers))
 
 # terminations_reduced <- terminations |> select(all_of(headers), 
@@ -60,6 +60,9 @@ terminations_reduced
 str(terminations_reduced)
 
 # change data types to factor for chr
-ggplot(terminations_reduced, aes(x = "L6 Mgr Name")) +
-  geom_bar()
+ggplot(terminations_reduced, aes(x = "L6 Mgr Name"))
+  geom_bar() 
+  
+  +
+  labs(x = "my label")
 
