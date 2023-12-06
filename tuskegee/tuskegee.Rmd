@@ -1,0 +1,235 @@
+---
+title: "Tuskegee Airmen"
+author: "Trent Brunson"
+date: "Dec 6, 2023"
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(colorspace)
+library(cowplot)
+library(sf)
+library(rnaturalearth)
+library(ggplot2)
+library(dplyr)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Read in the dataset:
+
+```{r message = FALSE, warning=FALSE}
+tuskegee <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-02-08/airmen.csv')
+head(tuskegee)
+```
+
+More information about the dataset can be found at this [Tidy Tuesday repo](https://github.com/rfordatascience/tidytuesday/blob/master/data/2022/2022-02-08/readme.md).
+
+Further context and references about the famed Tuskegee Airmen can be found at these
+credible websites:
+
+* [tuskegeeairmen.org](https://www.tuskegeeairmen.org/wp-content/uploads/2020/11/TAI_Resources_Tuskegee-Airmen-Questions-and-Answers-09_2014.pdf): an USAF organization dedicated to preserving the history of the USAF 
+* [USAF Tuskegee Airmen Heritage](https://www.usafa.edu/wwii-airpower-legend-receives-honorary-promotion-to-colonel/): 
+a recent event this month in the USAF with a Tuskegee pilot
+* [The Tuskegee Airmen Honor Court](https://www.usafa.af.mil/News/Article/619405/usafa-honors-tuskegee-airmen/):
+an illustration of the USAF heritage at USAFA
+
+---
+
+**Question:** Who are the Tuskegee Airmen? Where did Tuskegee Airmen come from? 
+
+---
+
+**Introduction:** The Tuskegee Airmen are a famed group of black, WWII male pilots named after 
+the city near their training field in Tuskegee, Alabama. Their legacy lives on today
+in the United States Air Force (USAF) and at my alma mater, the United States Air 
+Force Academy (USAFA). In fact, the Tuskegee Airmen legacy is memorialized in a special 
+place at the United States Air Force Academy, in its Honor Court.
+
+With that context, the dataset above will be used to illustrate where these Airmen came
+from in the United States of America. The dataset is little more than a list of training
+and dates at the Tuskegee airfield in Alabama, where the group derives their name. 
+The data includes name in three columns, training class name, graduation date, training
+location, hometown and state. It also includes training and combat information such as 
+pilot type (which has 4 valid values), aerial combat data and links to web profiles of 
+some of the Airmen (only about 20%). The four pilot types included 1) single engine,
+2) twin engine, 3) service and 4) liaison. Single went to fighter tracks, twin to 
+bomber tracks, liaison did observation and aerial spotting for ground forces, with 
+service flying transports and other aircraft like trainers. The data has no content about 
+missions other than fighter roles (ground attack, observer missions, service, etc.).
+
+---
+
+**Approach:** Since, there is very limited information about combat roles and combat support roles 
+in this dataset, the report will first examine the composition of training types. 
+It will derive some values of the pilot types that graduated to become members of the
+Tuskegee Airmen (whether trained there or not - all black WWII pilots of this era are 
+commonly referred to as Tuskegee Airmen since that is from where the preponderance of US 
+black pilots graduated).
+
+To examine from where the Tuskegee Airmen hail, this report will use the provided dataset 
+and pull the geometries using the rnaturalearth package, then converting the data type to 
+use in sf and plot with state boundaries generated from rnaturalearth.
+
+---
+
+**Analysis:**
+
+### Exploratory Data Analysis
+Output suppressed for report clarity. See comments for details of findings and
+table and development details.
+
+```{r results='hide', warning=FALSE, message=FALSE, fig.show='hide'}
+# EDA & data cleansing
+nrow(tuskegee)  # 1006 rows
+str(tuskegee)  # aerial victories in number, all other are chr data types
+unique(tuskegee)  # all unique entries
+colSums(!is.na(tuskegee))
+# name                  last_name                 first_name 
+# 1006                     1006                      1006 
+# graduation_date       rank_at_graduation        class 
+# 995                      1001                      986 
+# graduated_from         pilot_type               military_hometown_of_record 
+# 1006                     1006                      997 
+# state                 aerial_victory_credits    number_of_aerial_victory_credits 
+# 995                      72                        1006 
+# reported_lost         reported_lost_date        reported_lost_location 
+# 2                        2                         2 
+# web_profile 
+# 193 
+
+# counts of unique values in each df column
+sapply(tuskegee, data.table::uniqueN)
+# returned:
+ #            name                        last_name                       first_name 
+ #            1003                              617                              804 
+ # graduation_date               rank_at_graduation                            class 
+ #              53                                8                               73 
+ #  graduated_from                       pilot_type      military_hometown_of_record 
+ #               4                                5                              367 
+ #           state           aerial_victory_credits number_of_aerial_victory_credits 
+ #              49                               51                                6 
+ #   reported_lost               reported_lost_date           reported_lost_location 
+ #               2                                2                                2 
+ #     web_profile 
+ #             191 
+
+# get counts of each value
+# sapply(tuskegee, function(x) table(x))
+lapply(tuskegee, function(x) length(table(x)))  # list easier to read
+
+summary(tuskegee)
+
+unique(tuskegee$pilot_type)
+# 4 pilot types: "Single engine" "Twin engine"   "Liaison pilot" "Service pilot" "Liason pilot"
+  # liaison misspelled - group these together
+
+```
+
+---
+
+### Table computations  
+
+
+```{r comment = ""}
+# Graduating pilots,Bomber escort missions, Bomber missions, POW
+# year  liaison pilots  single (fighter) twin(bomber and CAS)
+# totals of each
+
+# dates <- as.Date(tuskegee$graduation_date, "%d-%b-%y")
+# years <- format(dates, "%Y")
+# tapply(tuskegee$year, years)
+# need lubridate package for above - not permitted in course
+# move on to summarizing pilot roles
+
+# correct the misspelling
+tuskegee$pilot_type[tuskegee$pilot_type == "Liason pilot"] <- "Liaison pilot"
+tuskegee_table <- tuskegee |> group_by(pilot_type) |>
+  summarize(number_pilots = n()) |>
+  mutate(percent_of_pilots = scales::label_percent()(number_pilots/sum(number_pilots))) %>%
+  # add a row to show the total number of pilots
+  # %>% nust be used instead of |>
+  bind_rows(summarize(., across(where(is.numeric), sum), across(where(is.character), ~'Total')))
+
+tuskegee_table
+
+```
+#### **Table 1.** Pilot type breakdown  
+
+---
+
+### Geospatial plotting 
+
+```{r warning=FALSE, message=FALSE}
+
+# show states with links to profiles
+# states <- ne_countries(scale = "medium", country = "united states of america", returnclass = "sf")
+us_states <- ne_states(country = "united states of america", returnclass = "sf") |>
+  filter(! name %in% c('Alaska', 'Hawaii'))
+
+us_states <- us_states |> rename("state" = "postal")
+# colnames(us_states)
+
+tusk_states <- tuskegee |>
+  group_by(state) |>
+  summarize(number_from = n())
+    # drop HT, Haiti 
+# tusk_states
+# newdf <- tusk_states |> left_join(select(us_states, state, geometry), by = "state")
+
+# reverse this - geom_sf couldn't find the geometry column even when explicitly expressed
+reverse <- us_states |> left_join(select(tusk_states, state, number_from), by = "state")
+
+ggplot(reverse) + 
+  geom_sf(aes(fill = number_from)) +
+  labs(fill = "Number of pilots") +
+  geom_text(data = reverse, aes(x = longitude, y = latitude, label = number_from),
+  color = "white", fontface = "bold", check_overlap = FALSE) + 
+  theme_minimal() + 
+  ggtitle("Tuskegee Airmen Home States")
+
+```
+
+### **Figure 1.** Tuskegee Airmen breakdown by home state
+
+--- 
+
+**Discussion:** 
+This was a challenging dataset to work with as it was almost entirely qualitative and 
+observational - not much room for statistical analysis as typically done. But sticking 
+with it because of interest in the important topic of the Tuskegee Airmen allowed 
+development of other aspects of data visualization. In the end, data analysis 
+and visualization is about persuasion. Persuading the data analyst, their boss, the 
+executive, the customer or client. Data visualization is about telling the story along 
+three fronts: ethos, pathos and logos. Ethos, the Latin root for ethics in English is 
+doing the right thing argument. Recognizing great citizens and their contribution 
+(whichever country you're from) is the right thing to do. Telling the story that 
+persuades and nudges through relatable attributes is the root of pathos (feeling). 
+Providing context and background about these selfless individuals creates a relatable 
+affinity. And the last is typically a data analysts or scientists staple, logos, or 
+logical arguments. It is important but perhaps not as important the first and when 
+coupled with pathos, can be very powerful. But alone, logos does little to transform. 
+That is why I chose to work on an effort to relay an emotionally significant period 
+in United States military history. 
+
+The Tuskegee Airmen legacy continues strong and with prominence in the USAF (see
+[The Tuskegee Airmen](https://www.usafa.edu/wwii-airpower-legend-receives-honorary-promotion-to-colonel/)). 
+These were stalwart men who chose to serve a nation and overcome extraordinary social 
+obstacles. The table shows and unusually large proportion of Tuskegee Airmen were directed 
+to single seat aircraft after training. Typically it is well less than half that enter 
+fighter pilot tracks, whereas they nearly doubled that rate at 70%. This may be due in 
+part from tactics to minimize interactions between whites and blacks in close quarters 
+of a shared cockpit in a bomber or a service aircraft like a transport. The existing 
+pilot population most likely reflected the social makeup of the country and its attitudes 
+at the time. There were separate eating establishments, classrooms and schools, down 
+to the toilet facilities. The Army Air Corps leadership may have felt this was a way 
+to limit the amount of barriers and resistance faced in allowing blacks to fly US aircraft.
+
+The graphic shows the distribution from where the Tuskegee Airmen originated. There 
+is a marked concentration in the northeast. This may reflect attitudes from 75 years 
+earlier, following the end of the US civil war, where blacks experienced more shared
+freedoms than the southern states provided. And perhaps that reflected in the attitude 
+of volunteers to join and serve the US military during WWII. It would be of further 
+interest to join another dataset to this showing 1940's population and extract rates 
+of service among black Americans to see if that supports or debunks the previous observation. 
+
+---
